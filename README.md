@@ -9,7 +9,6 @@
 - 从订阅链接或 YAML 文件中获取节点。
 - 暂时只支持 Shadowsocks（ss）、V2Ray（vmess）和 Trojan（trojan）协议。
 - 自动解密和处理加密的节点信息。
-- 生成的 `forward.txt` 文件包含格式化的节点信息
 
 ## 使用方法
 
