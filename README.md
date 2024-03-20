@@ -15,9 +15,9 @@
 
 ### 运行脚本
 
-#### 从 `forward.txt` 里的订阅地址或 YAML 文件中获取节点
+#### 从 `subscribes.txt` 里的订阅地址或 YAML 文件中获取节点
 
-脚本会首先尝试读取 `subscribe.txt` 文件。如果文件存在且不为空，它将从文件中获取订阅。如果文件不存在或为空，它将从当前目录下的所有 yaml 文件中获取节点。
+脚本会首先尝试读取 `subscribes.txt` 文件。如果文件存在且不为空，它将从文件中获取订阅。如果文件不存在或为空，它将从当前目录下的所有 yaml 文件中获取节点。
 
 ```
 python Subscribe.py
@@ -31,7 +31,7 @@ python Subscribe.py
 python Subscribe.py https://your_subscription_link_here
 ```
 
-将 `https://your_subscription_link_here` 替换为实际的订阅链接。每次运行脚本都会将订阅地址写入到 `subscribe.txt` 文件中，无需每次运行都添加订阅地址。
+将 `https://your_subscription_link_here` 替换为实际的订阅链接。每次运行脚本都会将订阅地址写入到 `subscribes.txt` 文件中，无需每次运行都添加订阅地址。
 如果有多个订阅地址，可以将它们写入到 `subscribes.txt` 文件中，每行一个，然后运行脚本即可。
 
 ### 输出
