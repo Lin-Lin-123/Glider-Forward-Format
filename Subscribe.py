@@ -9,6 +9,8 @@ import yaml
 
 # 用于存储所有节点
 all_nodes: list = []
+# 支持协议
+SUPPORT_PROTOCOLS = ("ss", "vmess", "trojan")
 
 
 def getNodes(url, retries=3) -> str | None:
@@ -127,26 +129,23 @@ def trojan(node: str | dict[str, str]) -> None:
             return
 
 
-"""用于存储协议与之相应的函数名"""
-PROTOCOLS = {"ss": ss, "vmess": vmess, "trojan": trojan}
-
-
 def processNodes(nodes: str | list[dict[str, str]]) -> None:
     """处理节点"""
-
+    namespace = globals()
     if isinstance(nodes, str):
         for node in nodes.split('\r'):
             node = node.strip()
-            for protocol in PROTOCOLS:
+            for protocol in SUPPORT_PROTOCOLS:
                 if node.startswith(protocol):
-                    PROTOCOLS[protocol](node)
+                    namespace[protocol](node)
         return
     elif isinstance(nodes, list):
         for node in nodes:
-            for protocol in PROTOCOLS:
-                if node['type'] == protocol:
-                    PROTOCOLS[protocol](node)
-        return
+            protocol = node.get("type")
+            if protocol in namespace:
+                namespace[protocol](node)
+    else:
+        print("节点类型错误！")
 
 
 def getNodesFromYaml() -> None:
