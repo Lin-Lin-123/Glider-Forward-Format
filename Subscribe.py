@@ -27,7 +27,7 @@ def getNodes(url, retries=3) -> str | None:
         print(e)
 
 
-def decode_base64(encrypt_string: str) -> str:
+def decodeBase64(encrypt_string: str) -> str:
     """节点 base64 解密"""
     # 检查长度是否为 4 的倍数，如果不是，添加适当数量的 '=' 字符
     padding = '=' * (4 - len(encrypt_string) % 4)
