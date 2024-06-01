@@ -61,7 +61,7 @@ def ss(node: str | dict[str, str]) -> None:
             return
 
         # 提取 cipher 和 password 以及端口
-        cipher_and_password = decode_base64(extracted_node[0])
+        cipher_and_password = decodeBase64(extracted_node[0])
         cipher, password = cipher_and_password.split(":")
         port = extracted_node[2]
 
@@ -85,7 +85,7 @@ def vmess(node: str | dict[str, str]) -> None:
         encrypt_vmess = node.strip().replace("vmess://", "")
 
         # 使用 base64 解码来解密 vmess 节点。
-        decrypt_vmess = decode_base64(encrypt_vmess)
+        decrypt_vmess = decodeBase64(encrypt_vmess)
 
         # 将解密的 vmess 节点转换为 JSON 对象，提取 uuid、服务器和端口
         vmess_json = json.loads(decrypt_vmess)
@@ -204,7 +204,7 @@ def main():
         encrypt_nodes = getNodes(url)
         if encrypt_nodes is not None and encrypt_nodes != "":
             addSubscribe(url)
-            nodes = decode_base64(encrypt_nodes)
+            nodes = decodeBase64(encrypt_nodes)
             processNodes(nodes)
         else:
             exit()
@@ -215,7 +215,7 @@ def main():
             for subscribe in subscribes:
                 encrypt_nodes = getNodes(subscribe)
                 if encrypt_nodes is not None and encrypt_nodes != "":
-                    nodes = decode_base64(encrypt_nodes)
+                    nodes = decodeBase64(encrypt_nodes)
                     processNodes(nodes)
                 else:
                     continue
