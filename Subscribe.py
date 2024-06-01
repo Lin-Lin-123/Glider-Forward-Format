@@ -9,8 +9,6 @@ import yaml
 
 # 用于存储所有节点
 all_nodes: list = []
-# 支持协议
-SUPPORT_PROTOCOLS = ("ss", "vmess", "trojan")
 
 
 def getNodes(url, retries=3) -> str | None:
@@ -38,11 +36,15 @@ def decode_base64(encrypt_string: str) -> str:
 
 def isUseless(server: str) -> bool:
     """判断是否为无用节点"""
-    keywords = ("127.0.0.1",)
-    if not isinstance(server, str):
-        server = str(server)
-    if server != '' and server in keywords:
-        return True
+    # 定义正则表达式匹配有效的外网 IP 地址
+    ip_pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+
+    # 检查 server 是否为有效的 IP 地址
+    if re.match(ip_pattern, server):
+        # 排除特殊地址
+        private_ips = ('10.', '100.', '127.', '169.', '172.16.', '192.168.')
+        if server.startswith(private_ips):
+            return True
     elif server.isdigit():
         return True
     else:
@@ -50,7 +52,7 @@ def isUseless(server: str) -> bool:
 
 
 def ss(node: str | dict[str, str]) -> None:
-    """整理 ss 节点"""
+    """格式化 ss 节点"""
     if isinstance(node, str):
         extracted_node = re.findall(r'ss://(?P<cipher_and_password>.*?)@(?P<server>.*?):(?P<port>.*?)#', node)[0]
 
@@ -77,7 +79,7 @@ def ss(node: str | dict[str, str]) -> None:
 
 
 def vmess(node: str | dict[str, str]) -> None:
-    """整理 vmess 节点"""
+    """格式化 vmess 节点"""
     if isinstance(node, str):
         # 从节点中移除 "vmess://" 前缀，并去除任何前导或尾随的空格。
         encrypt_vmess = node.strip().replace("vmess://", "")
@@ -87,8 +89,12 @@ def vmess(node: str | dict[str, str]) -> None:
 
         # 将解密的 vmess 节点转换为 JSON 对象，提取 uuid、服务器和端口
         vmess_json = json.loads(decrypt_vmess)
-        uuid = vmess_json["id"]
+
         server = vmess_json["add"]
+        if isUseless(server):
+            return
+
+        uuid = vmess_json["id"]
         port = vmess_json["port"]
 
         all_nodes.append(f"forward=vmess://{uuid}@{server}:{port}")
@@ -104,12 +110,15 @@ def vmess(node: str | dict[str, str]) -> None:
 
 
 def trojan(node: str | dict[str, str]) -> None:
-    """整理 trojan 节点"""
+    """格式化 trojan 节点"""
     if isinstance(node, str):
         # 使用正则表达式从节点中提取出密码、服务器和端口
         extracted = re.findall(r'trojan://(.*?)@(.*?):(.*?)\?allowInsecure=(\d).*?&sni=(.*?)#', node)[0]
-        password = extracted[0]
+
         server = extracted[1]
+        if isUseless(server):
+            return
+        password = extracted[0]
         port = extracted[2]
         skip_verify = "true" if extracted[3] == "1" else "false"
         server_name = extracted[4]
@@ -131,19 +140,20 @@ def trojan(node: str | dict[str, str]) -> None:
 
 def processNodes(nodes: str | list[dict[str, str]]) -> None:
     """处理节点"""
-    namespace = globals()
+    SUPPORT_PROTOCOLS = ("ss", "vmess", "trojan")
     if isinstance(nodes, str):
         for node in nodes.split('\r'):
             node = node.strip()
             for protocol in SUPPORT_PROTOCOLS:
                 if node.startswith(protocol):
-                    namespace[protocol](node)
-        return
+                    globals()[protocol](node)
     elif isinstance(nodes, list):
         for node in nodes:
             protocol = node.get("type")
-            if protocol in namespace:
-                namespace[protocol](node)
+            if protocol in SUPPORT_PROTOCOLS:
+                globals()[protocol](node)
+            else:
+                print(f"不支持的协议类型: {protocol}")
     else:
         print("节点类型错误！")
 
@@ -181,18 +191,14 @@ def getSubscribes() -> list[str] | None:
         filename = "Subscribes.txt"
     try:
         with open(filename, 'r', encoding='utf-8') as file:
-            subscribes = []
-            for line in file.readlines():
-                line = line.strip()
-                if line.startswith("http"):
-                    subscribes.append(line)
+            subscribes = [line.strip() for line in file if line.strip().startswith("http")]
             return subscribes
     except FileNotFoundError:
         return
 
 
 def main():
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 1 and not sys.argv[0].endswith('.py'):
         print("正在获取订阅链接中的节点...")
         url = sys.argv[1]
         encrypt_nodes = getNodes(url)
@@ -205,7 +211,7 @@ def main():
     else:
         subscribes = getSubscribes()
         if subscribes is not None and subscribes != []:
-            print("正在通过 subscribe.txt 文件中的订阅地址获取节点...")
+            print("正在通过 subscribes.txt 文件中的订阅地址获取节点...")
             for subscribe in subscribes:
                 encrypt_nodes = getNodes(subscribe)
                 if encrypt_nodes is not None and encrypt_nodes != "":
